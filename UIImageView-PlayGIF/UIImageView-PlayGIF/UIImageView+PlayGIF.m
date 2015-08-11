@@ -146,6 +146,53 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 }
 
 #pragma mark - ACTIONS
+- (void)showFrameAtIndex:(int)index{
+    
+    if([self isGIFPlaying]){
+        [self stopGIF];
+    }
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        if ((self.gifData || self.gifPath)) {
+            CGImageSourceRef gifSourceRef;
+            if (self.gifData) {
+                gifSourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)(self.gifData), NULL);
+            }else{
+                gifSourceRef = CGImageSourceCreateWithURL((__bridge CFURLRef)[NSURL fileURLWithPath:self.gifPath], NULL);
+            }
+            if (!gifSourceRef) {
+                return;
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                
+                self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
+                CGSize pxSize = [self GIFDimensionalSize];
+                objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                int i = 0;
+                if(index >= [self.frameCount intValue]){
+                    i = [self.frameCount intValue] - 1;
+                }else{
+                    i = index;
+                }
+                CGImageRef imageRef = CGImageSourceCreateImageAtIndex(gifSourceRef, i, NULL);
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    self.layer.contents = (__bridge id)(imageRef);
+                });
+            });
+        }
+    });
+}
+
+-(void)pauseGIF{
+    
+    if([self isGIFPlaying]){
+        int currentFrame = [self.index intValue];
+        
+        [self stopGIF];
+        [self showFrameAtIndex:currentFrame];
+    }
+}
 
 - (void)startGIF
 {
@@ -172,7 +219,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
                 CGSize pxSize = [self GIFDimensionalSize];
                 objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLength], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             });
         }
     });
@@ -182,12 +229,12 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     }
 }
 
--(NSNumber*)buildIndexAndReturnLength{
+-(NSNumber*)buildIndexAndReturnLengthFromImageSource:(CGImageSourceRef)ref{
     
     NSMutableDictionary* d = [[NSMutableDictionary alloc] initWithCapacity:[self.frameCount integerValue]];
     float l = 0;
     for(int i = 0; i < [self.frameCount intValue]; i++){
-        float durationAtIndex = [self frameDurationAtIndex:i];
+        float durationAtIndex = [self frameDurationAtIndex:i fromImageSource:ref];
         [d setObject:@(durationAtIndex) forKey:@(i)];
         l += durationAtIndex;
     }
@@ -247,8 +294,8 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     return CGImageSourceCreateImageAtIndex(ref, index, NULL);
 }
 
-- (float)gifFrameDurationAtIndex:(size_t)index{
-    return [self frameDurationAtIndex:index];
+- (float)gifFrameDurationAtIndex:(NSInteger)index{
+    return [[self.indexDurations objectForKey:[NSNumber numberWithInteger:index]] floatValue];
 }
 
 - (CGSize)GIFDimensionalSize{
@@ -270,8 +317,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     return sizeAsInProperties;
 }
 
-- (float)frameDurationAtIndex:(size_t)index{
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:self]);
+- (float)frameDurationAtIndex:(size_t)index fromImageSource:(CGImageSourceRef) ref{
     CFDictionaryRef dictRef = CGImageSourceCopyPropertiesAtIndex(ref, index, NULL);
     NSDictionary *dict = (__bridge NSDictionary *)dictRef;
     NSDictionary *gifDict = (dict[(NSString *)kCGImagePropertyGIFDictionary]);
