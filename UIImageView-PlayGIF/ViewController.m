@@ -23,10 +23,14 @@
 
 - (void)tapped:(UITapGestureRecognizer *)gestureRecognizer {
     YFGIFImageView *gifView = (YFGIFImageView *)gestureRecognizer.view;
+    
     if (gifView.isGIFPlaying) {
-        [gifView stopGIF];
+        float d = [gifView gifFrameDurationAtIndex:0];
+        [gifView pauseGIF];
+        NSLog(@"paused");
     }else{
         [gifView startGIF];
+        NSLog(@"started");
     }
     NSLog(@"%@",NSStringFromCGSize([gifView gifPixelSize]));
 }
@@ -42,13 +46,13 @@
     NSData *gifData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"car.gif" ofType:nil]];
     for (int i=0; i<18; i++) {
         // user 'YFGIFImageView' or 'UIImageView+PlayGIF'
-        YFGIFImageView *gifView = [[YFGIFImageView alloc] initWithFrame:CGRectMake(8+i%3*(96+8), 64+28+i/3*(54+8), 96, 54)];
-        //UIImageView *gifView = [[UIImageView alloc] initWithFrame:CGRectMake(8+i%3*(96+8), 28+i/3*(54+8), 96, 54)];
+        //YFGIFImageView *gifView = [[YFGIFImageView alloc] initWithFrame:CGRectMake(8+i%3*(96+8), 64+28+i/3*(54+8), 96, 54)];
+        UIImageView *gifView = [[UIImageView alloc] initWithFrame:CGRectMake(8+i%3*(96+8), 28+i/3*(54+8), 96, 54)];
         gifView.backgroundColor = [UIColor darkGrayColor];
         gifView.gifData = gifData;
         [self.view addSubview:gifView];
         // notice: before start, content is nil. You can set image for yourself
-        [gifView startGIF];
+        [gifView showFrameAtIndex:170];
         
         gifView.userInteractionEnabled = YES;
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapped:)];
