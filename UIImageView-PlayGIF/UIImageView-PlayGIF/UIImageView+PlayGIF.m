@@ -171,13 +171,13 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
             if (!gifSourceRef) {
                 return;
             }
+            [self setGifImageSourceRef:gifSourceRef];
             dispatch_async(dispatch_get_main_queue(), ^{
                 
                 self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
                 CGSize pxSize = [self GIFDimensionalSize];
                 objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                 objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                [self setGifImageSourceRef:gifSourceRef];
                 int i = 0;
                 if(index >= [self.frameCount intValue]){
                     i = [self.frameCount intValue] - 1;
@@ -222,6 +222,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
             if (!gifSourceRef) {
                 return;
             }
+            [self setGifImageSourceRef:gifSourceRef];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[PlayGIFManager shared].gifViewHashTable addObject:self];
                 [[PlayGIFManager shared].gifSourceRefMapTable setObject:(__bridge id)(gifSourceRef) forKey:self];
@@ -229,7 +230,6 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 CGSize pxSize = [self GIFDimensionalSize];
                 objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                 objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                [self setGifImageSourceRef:gifSourceRef];
             });
         }
     });
