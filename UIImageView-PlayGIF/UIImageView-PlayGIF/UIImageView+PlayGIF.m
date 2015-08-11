@@ -65,6 +65,8 @@
 
 /**********************************************************************/
 
+
+static const char * kGifImageSourceKey  = "kGifImageSourceKey";
 static const char * kGifPathKey         = "kGifPathKey";
 static const char * kGifDataKey         = "kGifDataKey";
 static const char * kIndexKey           = "kIndexKey";
@@ -108,6 +110,12 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 
 #pragma mark - ASSOCIATION
 
+-(CGImageSourceRef)gifImageSourceRef{
+    return (CGImageSourceRef) CFBridgingRetain(objc_getAssociatedObject(self, kGifImageSourceKey));
+}
+- (void)setGifImageSourceRef:(CGImageSourceRef)imageSourceRef{
+    objc_setAssociatedObject(self, kGifImageSourceKey, CFBridgingRelease(imageSourceRef), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
 -(NSString *)gifPath{
     return objc_getAssociatedObject(self, kGifPathKey);
 }
@@ -169,6 +177,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 CGSize pxSize = [self GIFDimensionalSize];
                 objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                 objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                [self setGifImageSourceRef:gifSourceRef];
                 int i = 0;
                 if(index >= [self.frameCount intValue]){
                     i = [self.frameCount intValue] - 1;
@@ -220,6 +229,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 CGSize pxSize = [self GIFDimensionalSize];
                 objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                 objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                [self setGifImageSourceRef:gifSourceRef];
             });
         }
     });
@@ -248,6 +258,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 
 - (void)stopGIF{
     [[PlayGIFManager shared] stopGIFView:self];
+    [self setGifImageSourceRef:nil];
 }
 
 - (void)play{
@@ -255,7 +266,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     
     float loopT = fmodf([self.timestamp floatValue], [[self gifLength] floatValue]);
     self.index = @([self indexForDuration:loopT]);
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:self]);
+    CGImageSourceRef ref = [self gifImageSourceRef];
 	CGImageRef imageRef = CGImageSourceCreateImageAtIndex(ref, self.index.integerValue, NULL);
     self.layer.contents = (__bridge id)(imageRef);
     CGImageRelease(imageRef);
@@ -281,6 +292,10 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     return [[PlayGIFManager shared].gifViewHashTable containsObject:self];
 }
 
+- (BOOL)isGIFLoaded{
+    return [self gifImageSourceRef] != nil;
+}
+
 - (CGSize) gifPixelSize{
     return [objc_getAssociatedObject(self, kPxSize) CGSizeValue];
 }
@@ -290,7 +305,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
         return nil;
     }
     
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:self]);
+    CGImageSourceRef ref = [self gifImageSourceRef];
     return CGImageSourceCreateImageAtIndex(ref, index, NULL);
 }
 
@@ -299,11 +314,11 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 }
 
 - (CGSize)GIFDimensionalSize{
-    if(![[PlayGIFManager shared].gifSourceRefMapTable objectForKey:self]){
+    if(![self gifImageSourceRef]){
         return CGSizeZero;
     }
     
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:self]);
+    CGImageSourceRef ref = [self gifImageSourceRef];
     CFDictionaryRef dictRef = CGImageSourceCopyPropertiesAtIndex(ref, 0, NULL);
     NSDictionary *dict = (__bridge NSDictionary *)dictRef;
     
@@ -337,7 +352,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     
     NSMutableArray* images = [NSMutableArray new];
     
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:self]);
+    CGImageSourceRef ref = [self gifImageSourceRef];
     
     if(!ref){
         return NULL;
