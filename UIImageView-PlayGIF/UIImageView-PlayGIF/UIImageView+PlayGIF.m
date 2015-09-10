@@ -301,7 +301,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 }
 
 - (CGImageRef) gifCreateImageForFrameAtIndex:(NSInteger)index{
-    if(![self isGIFPlaying]){
+    if(![self isGIFLoaded]){
         return nil;
     }
     
