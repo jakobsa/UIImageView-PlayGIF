@@ -211,7 +211,13 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 
 - (void)startGIFWithRunLoopMode:(NSString * const)runLoopMode
 {
+    __block __weak id myself = self;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        
+        if(!myself){
+            return;
+        }
+        
         if (![[PlayGIFManager shared].gifViewHashTable containsObject:self] && (self.gifData || self.gifPath)) {
             CGImageSourceRef gifSourceRef;
             if (self.gifData) {
@@ -223,25 +229,22 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 return;
             }
             [self setGifImageSourceRef:gifSourceRef];
+
+            [[PlayGIFManager shared].gifViewHashTable addObject:self];
+            [[PlayGIFManager shared].gifSourceRefMapTable setObject:(__bridge id)(gifSourceRef) forKey:self];
+            self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
+            CGSize pxSize = [self GIFDimensionalSize];
+            objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             
-            __block __weak id myself = self;
             dispatch_async(dispatch_get_main_queue(), ^{
-                if(!myself){
-                    return;
+                if (![PlayGIFManager shared].displayLink) {
+                    [PlayGIFManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[PlayGIFManager shared] selector:@selector(play)];
+                    [[PlayGIFManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:runLoopMode];
                 }
-                [[PlayGIFManager shared].gifViewHashTable addObject:self];
-                [[PlayGIFManager shared].gifSourceRefMapTable setObject:(__bridge id)(gifSourceRef) forKey:self];
-                self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
-                CGSize pxSize = [self GIFDimensionalSize];
-                objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             });
         }
     });
-    if (![PlayGIFManager shared].displayLink) {
-        [PlayGIFManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[PlayGIFManager shared] selector:@selector(play)];
-        [[PlayGIFManager shared].displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:runLoopMode];
-    }
 }
 
 -(NSNumber*)buildIndexAndReturnLengthFromImageSource:(CGImageSourceRef)ref{
