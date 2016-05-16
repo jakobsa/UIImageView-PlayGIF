@@ -223,7 +223,12 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 return;
             }
             [self setGifImageSourceRef:gifSourceRef];
+            
+            __block __weak id myself = self;
             dispatch_async(dispatch_get_main_queue(), ^{
+                if(!myself){
+                    return;
+                }
                 [[PlayGIFManager shared].gifViewHashTable addObject:self];
                 [[PlayGIFManager shared].gifSourceRefMapTable setObject:(__bridge id)(gifSourceRef) forKey:self];
                 self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
