@@ -114,7 +114,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     return (__bridge CGImageSourceRef) objc_getAssociatedObject(self, kGifImageSourceKey);
 }
 - (void)setGifImageSourceRef:(CGImageSourceRef)imageSourceRef{
-    objc_setAssociatedObject(self, kGifImageSourceKey, (__bridge id)imageSourceRef, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, kGifImageSourceKey, (__bridge id)imageSourceRef, OBJC_ASSOCIATION_ASSIGN);
 }
 -(NSString *)gifPath{
     return objc_getAssociatedObject(self, kGifPathKey);
