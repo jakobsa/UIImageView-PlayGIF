@@ -328,25 +328,23 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     
     CGImageSourceRef ref = [self gifImageSourceRef];
     CFDictionaryRef dictRef = CGImageSourceCopyPropertiesAtIndex(ref, 0, NULL);
-    NSDictionary *dict = (__bridge NSDictionary *)dictRef;
+    NSDictionary *dict = CFBridgingRelease(dictRef);
     
     NSNumber* pixelWidth = (dict[(NSString*)kCGImagePropertyPixelWidth]);
     NSNumber* pixelHeight = (dict[(NSString*)kCGImagePropertyPixelHeight]);
     
     CGSize sizeAsInProperties = CGSizeMake([pixelWidth floatValue], [pixelHeight floatValue]);
     
-    CFRelease(dictRef);
-    
     return sizeAsInProperties;
 }
 
 - (float)frameDurationAtIndex:(size_t)index fromImageSource:(CGImageSourceRef) ref{
     CFDictionaryRef dictRef = CGImageSourceCopyPropertiesAtIndex(ref, index, NULL);
-    NSDictionary *dict = (__bridge NSDictionary *)dictRef;
+    NSDictionary *dict = CFBridgingRelease(dictRef);
     NSDictionary *gifDict = (dict[(NSString *)kCGImagePropertyGIFDictionary]);
     NSNumber *unclampedDelayTime = gifDict[(NSString *)kCGImagePropertyGIFUnclampedDelayTime];
     NSNumber *delayTime = gifDict[(NSString *)kCGImagePropertyGIFDelayTime];
-    CFRelease(dictRef);
+
     if (unclampedDelayTime.floatValue) {
         return unclampedDelayTime.floatValue;
     }else if (delayTime.floatValue) {
