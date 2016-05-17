@@ -56,7 +56,7 @@
         [_gifSourceRefMapTable removeObjectForKey:view];
     }
     [_gifViewHashTable removeObject:view];
-    if (_gifViewHashTable.count<1 && !_displayLink) {
+    if (_gifViewHashTable.count<1 && _displayLink) {
         [self stopDisplayLink];
     }
 }
