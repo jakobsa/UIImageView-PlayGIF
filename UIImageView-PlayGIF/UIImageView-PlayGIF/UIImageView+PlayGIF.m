@@ -54,7 +54,6 @@
     CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:view]);
     if (ref) {
         [_gifSourceRefMapTable removeObjectForKey:view];
-        CFRelease(ref);
     }
     [_gifViewHashTable removeObject:view];
     if (_gifViewHashTable.count<1 && !_displayLink) {
@@ -114,7 +113,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     return (__bridge CGImageSourceRef) objc_getAssociatedObject(self, kGifImageSourceKey);
 }
 - (void)setGifImageSourceRef:(CGImageSourceRef)imageSourceRef{
-    objc_setAssociatedObject(self, kGifImageSourceKey, (__bridge id)imageSourceRef, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, kGifImageSourceKey, CFBridgingRelease(imageSourceRef), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 -(NSString *)gifPath{
     return objc_getAssociatedObject(self, kGifPathKey);
@@ -189,7 +188,6 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 self.layer.contents = (__bridge id)(imageRef);
                 
                 CGImageRelease(imageRef);
-                CFRelease(gifSourceRef);
             });
         }
     });
@@ -239,7 +237,6 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
             objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             
-            CFRelease(gifSourceRef);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (![PlayGIFManager shared].displayLink) {
                     [PlayGIFManager shared].displayLink = [CADisplayLink displayLinkWithTarget:[PlayGIFManager shared] selector:@selector(play)];
