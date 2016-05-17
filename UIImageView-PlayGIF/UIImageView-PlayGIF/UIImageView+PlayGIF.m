@@ -40,7 +40,7 @@
 	return self;
 }
 - (void)play{
-    for (UIImageView *imageView in _gifViewHashTable) {
+    for (UIImageView *imageView in [_gifViewHashTable copy]) {
         [imageView performSelector:@selector(play)];
     }
 }
