@@ -40,8 +40,10 @@
 	return self;
 }
 - (void)play{
-    for (UIImageView *imageView in [_gifViewHashTable copy]) {
-        [imageView performSelector:@selector(play)];
+    @synchronized (_gifViewHashTable) {
+        for (UIImageView *imageView in _gifViewHashTable) {
+            [imageView performSelector:@selector(play)];
+        }
     }
 }
 - (void)stopDisplayLink{
@@ -55,7 +57,9 @@
     if (ref) {
         [_gifSourceRefMapTable removeObjectForKey:view];
     }
-    [_gifViewHashTable removeObject:view];
+    @synchronized (_gifViewHashTable) {
+        [_gifViewHashTable removeObject:view];
+    }
     if (_gifViewHashTable.count<1 && _displayLink) {
         [self stopDisplayLink];
     }
@@ -233,8 +237,9 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 return;
             }
             [self setGifImageSourceRef:gifSourceRef];
-
-            [[PlayGIFManager shared].gifViewHashTable addObject:self];
+            @synchronized ([PlayGIFManager shared].gifViewHashTable) {
+                [[PlayGIFManager shared].gifViewHashTable addObject:self];
+            }
             [[PlayGIFManager shared].gifSourceRefMapTable setObject:(__bridge id)(gifSourceRef) forKey:self];
             self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
             CGSize pxSize = [self GIFDimensionalSize];
