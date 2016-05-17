@@ -18,7 +18,6 @@
 @interface PlayGIFManager : NSObject
 @property (nonatomic, strong) CADisplayLink     *displayLink;
 @property (nonatomic, strong) NSHashTable       *gifViewHashTable;
-@property (nonatomic, strong) NSMapTable        *gifSourceRefMapTable;
 + (PlayGIFManager *)shared;
 - (void)stopGIFView:(UIImageView *)view;
 @end
@@ -35,7 +34,6 @@
 	self = [super init];
 	if (self) {
 		_gifViewHashTable = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
-        _gifSourceRefMapTable = [NSMapTable mapTableWithKeyOptions:NSMapTableWeakMemory valueOptions:NSMapTableWeakMemory];
 	}
 	return self;
 }
@@ -53,10 +51,6 @@
     }
 }
 - (void)stopGIFView:(UIImageView *)view{
-    CGImageSourceRef ref = (__bridge CGImageSourceRef)([[PlayGIFManager shared].gifSourceRefMapTable objectForKey:view]);
-    if (ref) {
-        [_gifSourceRefMapTable removeObjectForKey:view];
-    }
     @synchronized (_gifViewHashTable) {
         [_gifViewHashTable removeObject:view];
     }
@@ -175,12 +169,12 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
                 return;
             }
             [self setGifImageSourceRef:gifSourceRef];
+            self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
+            objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:[self GIFDimensionalSize]], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
             dispatch_async(dispatch_get_main_queue(), ^{
-                
-                self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
-                CGSize pxSize = [self GIFDimensionalSize];
-                objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
                 int i = 0;
                 if(index >= [self.frameCount intValue]){
                     i = [self.frameCount intValue] - 1;
@@ -240,7 +234,6 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
             @synchronized ([PlayGIFManager shared].gifViewHashTable) {
                 [[PlayGIFManager shared].gifViewHashTable addObject:self];
             }
-            [[PlayGIFManager shared].gifSourceRefMapTable setObject:(__bridge id)(gifSourceRef) forKey:self];
             self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
             CGSize pxSize = [self GIFDimensionalSize];
             objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:pxSize], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
