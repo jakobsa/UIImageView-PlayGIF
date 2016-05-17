@@ -168,10 +168,12 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
             if (!gifSourceRef) {
                 return;
             }
-            [self setGifImageSourceRef:gifSourceRef];
+            
             self.frameCount = [NSNumber numberWithInteger:CGImageSourceGetCount(gifSourceRef)];
+            
             objc_setAssociatedObject(self, kPxSize, [NSValue valueWithCGSize:[self GIFDimensionalSize]], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             objc_setAssociatedObject(self, kGifLength, [self buildIndexAndReturnLengthFromImageSource:gifSourceRef], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            [self setGifImageSourceRef:gifSourceRef];
             
             dispatch_async(dispatch_get_main_queue(), ^{
 
