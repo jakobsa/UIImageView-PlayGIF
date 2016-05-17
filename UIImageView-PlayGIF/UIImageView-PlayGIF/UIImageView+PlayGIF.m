@@ -209,12 +209,16 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     [self startGIFWithRunLoopMode:NSDefaultRunLoopMode];
 }
 
-- (void)startGIFWithRunLoopMode:(NSString * const)runLoopMode
-{
-    __block __weak id myself = self;
+- (void)startGIFWithRunLoopMode:(NSString * const)runLoopMode {
+
+    __weak id weakSelf = self;
+    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         
-        if(!myself){
+        id strongSelf = weakSelf;
+        
+        if(!strongSelf){
+            //dealloced meanwhile, see http://stackoverflow.com/a/10905098/606730
             return;
         }
         
