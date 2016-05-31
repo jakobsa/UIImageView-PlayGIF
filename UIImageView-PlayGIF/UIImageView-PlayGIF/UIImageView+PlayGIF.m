@@ -305,7 +305,7 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
 }
 
 - (BOOL)isGIFLoaded{
-    return [self gifImageSourceRef] != nil;
+    return self.gifData != nil;
 }
 
 - (CGSize) gifPixelSize{
