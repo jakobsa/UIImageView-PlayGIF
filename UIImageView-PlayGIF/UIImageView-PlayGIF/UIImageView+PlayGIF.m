@@ -308,6 +308,14 @@ static const char * kIndexDurationKey   = "kIndexDurationKey";
     return self.gifData != nil || self.gifPath != nil;
 }
 
+- (void)unloadGIF{
+    if([self isGIFLoaded] && [self isGIFPlaying]){
+        [self stopGIF];
+    }
+    self.gifPath = nil;
+    self.gifData = nil;
+}
+
 - (CGSize) gifPixelSize{
     return [objc_getAssociatedObject(self, kPxSize) CGSizeValue];
 }

@@ -50,6 +50,7 @@
 - (void)stopGIF;
 - (BOOL)isGIFPlaying;
 - (BOOL)isGIFLoaded;
+- (void)unloadGIF;
 - (CGSize) gifPixelSize;
 - (CGImageRef) gifCreateImageForFrameAtIndex:(NSInteger)index;
 - (float)gifFrameDurationAtIndex:(NSInteger)index;
